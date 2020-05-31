@@ -33,6 +33,7 @@ exports.authorizationUI = (req, res, next) => {
 			next();
 		});
 	} else {
+		if(req.originalUrl === '/') return res.redirect('/login');
 		return res.sendFile(path.join(__dirname, '../public', '404.html'));
 	}
 };
