@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+  <title>Voting</title>
+</head>
+<body>
+  <nav class="navbar navbar-dark bg-primary justify-content-between">
+    <a class="navbar-brand text-white" id="username"></a>
+    <button  onclick="toLogout()" class="btn btn-link text-white">Log Out</button>
+  </nav>
+  <button  onclick="toMyVotes()" class="btn btn-link col-4 offset-2 m-2"> <- to My votes list </button>
+  <form class="col-6 offset-3 my-5" onsubmit="return false;" id="form">
+    <div class="card">
+      <div class="card-body" id="question"></div>
+    </div>
+    <div class="my-4" id="answers"></div>
+    <div id="chartContainer"></div>
+  </form>
+</body>
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/canvasjs/1.7.0/canvasjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
+<script>
+  let answers = [];
+  let votes = [];
+
+  const questionnaireId = window.location.href.split('/').pop();
+  const answersTag = document.getElementById('answers');
+  const questionTag = document.getElementById('question');
+  const usernameTag = document.getElementById('username');
+    
+  usernameTag.innerHTML = localStorage.getItem('username') || 'noname';
+
+
+  function toLogout() {
+    localStorage.clear();
+    document.cookie = "JWT=";
+    window.location.replace('/login');
+  }
+
+  function toMyVotes() {
+    window.location.replace('/votes');
+  }
+
+  async function getVote() {
+
+    const response = await fetch(`/api/v1/questionnaire/${questionnaireId}`, { 
+      method: 'GET', 
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    const { data } = await response.json();
+    questionTag.innerText = data.question;
+
+    if(data.answers.length == 0) {
+      answersTag.insertAdjacentHTML(
+        'beforeend', 
+        `<p class="lead emptyList">Answers is not found o_O</p>
+      `);
+    } else {
+      data.answers.forEach(answer => {
+        answersTag.insertAdjacentHTML('beforeend', `
+          <button type="button" onclick="onVote('${answer._id}')" class="btn btn-primary m-3">${answer.text}</button>
+        `)
+      })
+    };
+
+    renderChart(data.answers, data.votes);
+  }
+
+
+  const renderChart = (answers = [], votes = []) => {
+
+    let columns = answers.map( answer => ({ _id: answer._id, label: answer.text, y: 0 }));
+    let dataPoints = votes.reduce( ( acc, value ) => { 
+      console.log('value', value);
+      console.log('acc', acc);
+
+      return acc.map( answer => String(answer._id) === String(value.answerId) ? { ...answer, y: answer.y + 1 } : answer );
+    }, columns);
+
+    const chartContainer = document.querySelector('#chartContainer');
+          
+    if(chartContainer){
+      const chart = new CanvasJS.Chart('chartContainer', {
+        animationEnabled: true,
+        theme: 'theme1',
+        data:[
+          {
+            type: 'column',
+            dataPoints: dataPoints
+          }
+        ]
+      });
+      chart.render();
+    }
+  };
+
+
+  async function onVote(answerId) {
+    const question = document.getElementById('question').value;
+
+    const response = await fetch(`/api/v1/questionnaire/${questionnaireId}/vote/${answerId}`, { 
+      method: 'PUT', 
+      headers: { 'Content-Type': 'application/json' },
+    });
+      
+    console.log('response', response);
+    const error = document.getElementById('error');
+    
+    switch(response.status) {
+      case 200:
+        const result = await response.json();
+        break;
+      default: 
+        // nothing
+    }
+  }
+
+
+  let socket = io('/');
+  socket.on('VOTE_EVENT', data => {
+      renderChart(data.answers, data.votes);
+  });
+
+  getVote();
+
+</script>
+<script>
+</script>
+</html>

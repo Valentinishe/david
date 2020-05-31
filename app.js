@@ -1,28 +1,35 @@
+require('dotenv').config();
 const express = require('express');
+const http = require('http');
+const morgan = require('morgan'); // for logs
 const path = require('path');
-const bodyParser = require('body-parser');
-const cors = require('cors');
+var cookieParser = require('cookie-parser'); // for parse cookies
 
-// DB Config
-require('./config/db');
+
+// services
+const WssService = require('./services/wss.service');
+const MongoDBService = require('./services/mongodb.service.js');
+
+const router = require('./routes/index');
+const PORT = process.env.PORT || 3001;
+
 
 const app = express();
 
-const poll = require('./routes/poll');
+MongoDBService.connect();
 
+app.use(morgan('dev'));
 // Set public folder
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(cookieParser())
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
-// Body parser middleware
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+// router
+router(app);
 
-// Enable CORS
-app.use(cors());
+const server = http.createServer(app);
+WssService.init(server);
+server.listen(PORT, () => console.log(`Server running and listen, ${PORT} port! `));
 
-app.use('/poll', poll);
-
-const port = 3000;
-
-// Start server
-app.listen(port, () => console.log(`Server started on port ${port}`));
+module.exports = app;

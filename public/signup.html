@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+  <title>Sign Up</title>
+</head>
+<body class="container h-100">
+    <div class="row h-100 align-items-center mt-5">
+      <form class="col-4 offset-4" onsubmit="return false;">
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input type="text" class="form-control" id="username" aria-describedby="emailHelp" placeholder="Enter username">
+          <small id="emailHelp" class="form-text text-muted">username must be unique</small>
+        </div>
+        <div class="form-group">
+          <label for="sex">Sex</label>
+          <select class="custom-select" id="sex">
+            <option selected value="1">Male</option>
+            <option value="2">Female</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="birthday">Date of Birth</label>
+          <input type="date" class="form-control" id="birthday" placeholder="Date of Birth">
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" class="form-control" id="password" placeholder="Password">
+        </div>
+        <div class="row">
+          <button  onclick="toLogin()" class="btn btn-link col-5">LogIn</button>
+          <button  onclick="onSignup()" class="btn btn-primary col-4 offset-2">Sign Up</button>
+        </div>
+        <label class="form-check-label py-5 text-danger" id="error"></label>
+      </form>
+    </div>
+</body>
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+
+<script>
+
+  function toLogin() {
+    window.location.replace('/login');
+  }
+
+  async function onSignup() {
+      const password = document.getElementById('password').value;
+      const username = document.getElementById('username').value;
+      const sex = document.getElementById('sex').value;
+      const birthday = document.getElementById('birthday').value;
+
+      const response = await fetch('api/v1/users/signup', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password, username, sex, birthDateAt: Date.parse(birthday) })
+      });
+
+      const error = document.getElementById('error');
+
+    
+      switch(response.status) {
+        case 400:
+          error.innerText = await response.text();
+          break;
+        case 200:
+          error.innerText = '';
+          const data = await response.json();
+          console.log('data', data);
+          document.cookie = `JWT=${data.token}`;
+          localStorage.setItem('username', username);
+          window.location.replace('/votes');
+          break;
+        default: 
+          // nothing
+      }
+  }
+
+</script>
+</html>

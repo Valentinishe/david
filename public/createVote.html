@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+  <title>Create new questionare</title>
+</head>
+<body>
+  <nav class="navbar navbar-dark bg-primary justify-content-between">
+    <a class="navbar-brand text-white" id="username"></a>
+    <button  onclick="toLogout()" class="btn btn-link text-white">Log Out</button>
+  </nav>
+  <button  onclick="toMyVotes()" class="btn btn-link col-4 offset-2 m-2"> <- to My votes list </button>
+  <form class="col-8 offset-2 my-5" onsubmit="return false;" id="form">
+    <h4>Create new Votes:</h4>
+    <div class="form-group">
+        <label for="question">Question</label>
+        <textarea aria-multiline="true" class="form-control" id="question" placeholder="Enter question"></textarea>
+    </div>
+    <label>Answers</label>
+    <div id="answers">
+    </div>
+    <div class="row">
+      <button  onclick="onAddAnswer()" class="btn btn-link">Add answer</button>
+    </div>
+    <div class="text-right py-5">
+      <button  onclick="onCreate()" class="btn btn-primary">Create</button>
+    </div>
+
+    <label class="form-check-label py-5 text-danger" id="error"></label>
+  </form>
+</body>
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+
+<script>
+  let answers = [];
+  const answersTag = document.getElementById('answers');
+
+  function toLogout() {
+    localStorage.clear();
+    document.cookie = "JWT=";
+    window.location.replace('/login');
+  }
+  
+  function toMyVotes() {
+    window.location.replace('/votes');
+  }
+
+  function onAddAnswer() {
+    answers.push('');
+    const divKey = `div-${answers.length - 1}`;
+    const inputKey = `input-${answers.length - 1}`;
+
+    answersTag.insertAdjacentHTML('beforeend', `
+      <div class="form-group d-flex" id="${divKey}">
+          <input type="text" class="form-control col-10" id="${inputKey}"/>
+          <button onclick="onRemoveAnswer('${divKey}')" class="btn btn-link col-3">Remove</button>
+      </div>
+    `)
+  }
+
+  function setAnswers(index) {
+    const count = answers.length;
+    answers = [];
+
+    for(let i = 0; i < count; i++ ) {
+      const divKey = `div-${i}`;
+      const inputKey = `input-${i}`;
+      if( divKey != index) {
+        const tag = document.getElementById(inputKey);
+        answers.push(tag.value);
+      }
+    }
+  }
+
+  function onRemoveAnswer(index) {
+      
+    setAnswers(index);
+
+    answersTag.innerHTML = "";
+
+    for(let i = 0; i < answers.length; i++) {
+      const divKey = `div-${i}`;
+      const inputKey = `input-${i}`;
+
+      answersTag.insertAdjacentHTML('beforeend', `
+        <div class="form-group d-flex" id="${divKey}">
+          <input type="text" class="form-control col-10" id="${inputKey}" value="${answers[i]}"/>
+          <button onclick="onRemoveAnswer('${divKey}')" class="btn btn-link col-3">Remove</button>
+        </div>
+      `)
+    }
+  }
+
+  async function onCreate() {
+      const question = document.getElementById('question').value;
+      setAnswers();
+
+
+      const response = await fetch('/api/v1/questionnaire', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question, answers })
+      });
+      
+      const error = document.getElementById('error');
+    
+      switch(response.status) {
+        case 400:
+          error.innerText = await response.text();
+          break;
+        case 200:
+          error.innerText = '';
+          const result = await response.json();
+          window.location.replace('/votes/' + result.data._id);
+          break;
+        default: 
+          // nothing
+      }
+  }
+</script>
+<script>
+</script>
+</html>

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+
+  <title>My Votes</title>
+  <style>
+    .emptyList {
+      margin-top: 100px;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+  <nav class="navbar navbar-dark bg-primary justify-content-between">
+    <a class="navbar-brand text-white" id="username"></a>
+    <button  onclick="toLogout()" class="btn btn-link text-white">Log Out</button>
+  </nav>
+  <div class="mx-3">
+    <div class="text-right">
+      <button  onclick="toNew()" class="btn btn-primary my-2">Create new</button>
+    </div>
+    <div class="overflow-auto">
+      <div id="list" class="align-items-center"></div>
+    </div>
+  </div>
+</body>
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+<script>
+  let list = [];
+
+  async function getMyVotes () {
+    const response = await fetch('api/v1/questionnaire/my', { 
+      method: 'GET', 
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    const { data } = await response.json();
+    
+
+    console.log('list', data);
+
+    if(data.length == 0) {
+      listTag.insertAdjacentHTML(
+        'beforeend', 
+        `<p class="lead emptyList">You do not have your own questionnaires.</p>
+      `);
+    } else {
+      data.forEach(vote => {
+        listTag.insertAdjacentHTML('beforeend', `
+          <div class="card w-75 col-8 offset-2 my-4">
+            <div class="card-body">
+              <h5 class="card-title">${vote.question}</h5>
+              <div class="text-right">
+                <a href="/votes/${vote._id}" class="btn btn-link">${vote._id}</a>
+              </div>
+            </div>
+          </div>
+        `)
+      })
+    };
+  }
+
+  function toLogout() {
+    localStorage.clear();
+    document.cookie = "JWT=";
+    window.location.replace('/login');
+  }
+
+  function toVote (id) {
+    return () => {
+      window.location.replace('/votes/' + id);
+    }
+  } 
+
+  function toNew() {
+    window.location.replace('/votes/new');
+  } 
+
+</script>
+
+<script>
+  const usernameTag = document.getElementById('username');
+  const listTag = document.getElementById('list');
+    
+  usernameTag.innerHTML = localStorage.getItem('username') || 'noname';
+
+  getMyVotes();
+
+  
+</script>
+</html>
