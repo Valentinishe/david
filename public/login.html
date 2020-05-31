@@ -20,9 +20,9 @@
           <label for="password">Password</label>
           <input type="password" class="form-control" id="password" placeholder="Password">
         </div>
-        <div class="row">
-          <button  onclick="toSignUp()" class="btn btn-link col-5">Sign Up</button>
-          <button  onclick="onLogin()" class="btn btn-primary col-4 offset-2">LogIn</button>
+        <div class=" d-flex flex-row-reverse flex-fill justify-content-between px-2">
+          <button  tabindex="1" onclick="onLogin()" class="btn btn-primary">LogIn</button>
+          <button  tabindex="2" onclick="toSignUp()" class="btn btn-link">Sign Up</button>
         </div>
         <label class="form-check-label py-5 text-danger" id="error"></label>
       </form>
@@ -56,8 +56,8 @@
         error.innerText = await response.text();
         break;
       case 200:
-        const data = await response.json();
-        document.cookie = `JWT=${data.token}`;
+        const { token } = await response.json();
+        document.cookie = "JWT=" + token +";";
         localStorage.setItem('username', username);
         window.location.replace('/votes');
         break;

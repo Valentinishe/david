@@ -32,9 +32,9 @@
           <label for="password">Password</label>
           <input type="password" class="form-control" id="password" placeholder="Password">
         </div>
-        <div class="row">
-          <button  onclick="toLogin()" class="btn btn-link col-5">LogIn</button>
-          <button  onclick="onSignup()" class="btn btn-primary col-4 offset-2">Sign Up</button>
+        <div class=" d-flex flex-row-reverse flex-fill justify-content-between px-2">
+          <button  tabindex="2" onclick="onSignUp()" class="btn btn-primary">Sign Up</button>
+          <button  tabindex="1" onclick="toLogin()" class="btn btn-link">LogIn</button>
         </div>
         <label class="form-check-label py-5 text-danger" id="error"></label>
       </form>
@@ -50,7 +50,7 @@
     window.location.replace('/login');
   }
 
-  async function onSignup() {
+  async function onSignUp() {
       const password = document.getElementById('password').value;
       const username = document.getElementById('username').value;
       const sex = document.getElementById('sex').value;
@@ -73,7 +73,7 @@
           error.innerText = '';
           const data = await response.json();
           console.log('data', data);
-          document.cookie = `JWT=${data.token}`;
+          document.cookie = `JWT=${data.token};`;
           localStorage.setItem('username', username);
           window.location.replace('/votes');
           break;
